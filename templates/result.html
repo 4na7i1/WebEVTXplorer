@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EVTX Parser Results</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+
+        .draggable-container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .draggable.highlighted-4624 {
+            background-color: #ffc2c2; /* Light red background color */
+        }
+
+        .draggable.highlighted-4648 {
+            background-color: #c2eaff; /* Light blue background color */
+        }
+
+        .draggable {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px;
+            cursor: grab;
+            min-width: 300px;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Roboto', sans-serif;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .dragover {
+            border: 2px dashed #ccc;
+        }
+
+        .draggable.dragging {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            opacity: 0.8;
+            cursor: grabbing;
+        }
+
+        /* Adjust the style for the <pre> element inside .draggable */
+        .draggable pre {
+            overflow: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            display: none; /* Initially hide the pre element */
+        }
+
+        /* Card hover effect */
+        .draggable:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom button styles */
+        .custom-button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+
+        /* Hover effect for the custom button */
+        .custom-button:hover {
+            background-color: #45a049;
+        }
+
+        /* Active effect for the custom button */
+        .custom-button:active {
+            background-color: #367e38;
+        }
+
+        .button-singleToggle {
+            background-color: #4ca0af;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+
+        /* Hover effect for the custom button */
+        .button-singleToggle:hover {
+            background-color: #4575a0; 
+        }
+
+        /* Active effect for the custom button */
+        .button-singleToggle:active {
+            background-color: #187185;
+        }
+    </style>
+</head>
+<body>
+    <!-- <h1>{{ filename }}</h1> -->
+    <h1>Event Log Entries : <u>{{ filename }}</u></h1>
+    <div class="text-center">
+        <button class="custom-button" onclick="toggleAllPreVisibility()">Toggle All</button>
+    </div>
+    <div class="draggable-container" id="sortable-container">
+        {% for event in events %}
+            <div class="draggable {% if event['event_id'] == '4624' %}highlighted-4624{% endif %}
+            {% if event['event_id'] == '4648' %}highlighted-4648{% endif %}" draggable="true">
+                <button class= "button-singleToggle" onclick="togglePreVisibility(this)">Toggle</button>
+                <div class="event-content">
+                    <h2>Event ID: {{ event['event_id'] }}<br>Machine: {{ event['machineName'] }}</h2>
+                    <p>Timestamp: {{ event['timestamp'] }}</p>
+                    <pre>{{ event['data'] }}</pre> 
+                </div>
+                <hr>
+            </div>
+        {% endfor %}
+    </div>
+    <script>
+        // JavaScript to enable drag functionality
+        const sortableContainer = document.getElementById('sortable-container');
+        let draggingElement;
+
+        sortableContainer.addEventListener('dragstart', (e) => {
+            e.dataTransfer.effectAllowed = 'move';
+            draggingElement = e.target.closest('.draggable');
+            draggingElement.classList.add('dragging');
+        });
+
+        sortableContainer.addEventListener('dragend', (e) => {
+            draggingElement.classList.remove('dragging');
+        });
+
+        sortableContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const targetElement = e.target.closest('.draggable');
+            if (targetElement && targetElement !== draggingElement) {
+                const draggingRect = draggingElement.getBoundingClientRect();
+                const targetRect = targetElement.getBoundingClientRect();
+                const offset = e.clientX - targetRect.left;
+                const targetPosition = offset > targetRect.width / 2 ? 'afterend' : 'beforebegin';
+
+                if (targetPosition === 'afterend') {
+                    sortableContainer.insertBefore(draggingElement, targetElement.nextElementSibling);
+                } else {
+                    sortableContainer.insertBefore(draggingElement, targetElement);
+                }
+            }
+        });
+
+        function togglePreVisibility(button) {
+            const eventContent = button.parentElement.querySelector('.event-content');
+            const preElement = eventContent.querySelector('pre');
+            preElement.style.display = preElement.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleAllPreVisibility() {
+            const preElements = document.getElementsByTagName('pre');
+            for (let i = 0; i < preElements.length; i++) {
+                const preElement = preElements[i];
+                preElement.style.display = preElement.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+    </script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/vkbeautify/0.99.3/vkbeautify.min.js"></script> -->
+</body>
+</html>

@@ -1,0 +1,4 @@
+.venv
+static
+*.evtx
+test*
