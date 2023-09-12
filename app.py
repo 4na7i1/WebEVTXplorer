@@ -2,8 +2,9 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 import os
 from evtx import PyEvtxParser
 import re
-from lxml import etree
-import socket
+
+event_id_pattern = re.compile(r'<EventID(?:\s+Qualifiers="\d+")?>(\d+)</EventID>')
+machine_name_pattern = re.compile(r'<Computer>(.*?)</Computer>')
 
 app = Flask(__name__)
 
@@ -11,23 +12,8 @@ app = Flask(__name__)
 if not os.path.exists('uploads'):
     os.makedirs('uploads')
 
-# Set local hostnames
-# local_hostname = socket.gethostname()
-# LOCAL_HOSTNAMES = ['localhost', '127.0.0.1', local_hostname]
-
-# def is_local_host(host):
-#     return host in LOCAL_HOSTNAMES
-
-# @app.route('/favicon.ico')
-# def favicon():
-#     print(">>favicon")
-#     return send_from_directory(os.path.join(app.root_path, 'static/img'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
 @app.route('/')
 def index():
-    host = request.host.split(':')[0]
-    # is_local = is_local_host(host)
-    print("[INFO] Deploy " + host)
     uploaded_files = os.listdir('uploads')
     return render_template('upload.html', uploaded_files=uploaded_files)
 
@@ -36,10 +22,8 @@ def parse_evtx():
     evtx_file = request.files['evtx_file']
     if evtx_file:
         file_path = os.path.join('uploads', evtx_file.filename)
-        print(file_path)
 
         if not os.path.isfile(file_path):
-            print("[INFO] SAVE-FILE :", file_path)
             evtx_file.save(file_path)
 
         events_generator = parse_evtx_file(file_path)
@@ -51,8 +35,6 @@ def parse_evtx():
 def parse_evtx_load_save_file():
     selected_filename = request.form.get('filename')
     file_path = os.path.join('uploads', selected_filename)
-    print("[INFO] LOAD-FILE :", file_path)
-
     return stream_template('result.html', events=parse_evtx_file(file_path), filename=selected_filename)
 
 @app.route("/delete_file", methods=["POST"])
@@ -60,7 +42,6 @@ def delete_file():
     data = request.get_json()
     filename = data.get("filename")
     evtx_file_path = os.path.join("uploads", filename)
-    print("[INFO] DELETE-FILE :", evtx_file_path)
 
     file_extension = os.path.splitext(filename)[1].lower()
     if file_extension == ".evtx":
@@ -82,7 +63,6 @@ def stream_template(template_name, **context):
     return rv   
 
 def parse_evtx_file(file_path):
-    print(">>parse_evtx_file")
     parser = PyEvtxParser(file_path)
     
     for record in parser.records():
@@ -103,15 +83,15 @@ def parse_evtx_file(file_path):
         yield event
 
 def extract_event_id(event_data):
-    event_id_match = re.search(r'<EventID(?:\s+Qualifiers="\d+")?>(\d+)</EventID>', event_data)
+    event_id_match = event_id_pattern.search(event_data)
     return event_id_match.group(1) if event_id_match else None
 
 def extract_machine_name(event_data):
-    machine_name_match = re.search(r'<Computer>(.*?)</Computer>', event_data)
+    machine_name_match = machine_name_pattern.search(event_data)
     return machine_name_match.group(1) if machine_name_match else None
 
 def remove_rendering_INFOo(event_data):
     return re.sub(r'<RenderingINFOo[^>]*>.*?</RenderingINFOo>\n', '', event_data, flags=re.DOTALL)
 
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')
