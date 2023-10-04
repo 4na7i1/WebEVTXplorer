@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>EVTX Parser Results</title>
     <style>
@@ -61,7 +62,8 @@
             overflow: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
-            display: none; /* Initially hide the pre element */
+            display: none;
+            /* Initially hide the pre element */
         }
 
         /* Card hover effect */
@@ -115,7 +117,7 @@
 
         /* Hover effect for the custom button */
         .button-singleToggle:hover {
-            background-color: #4575a0; 
+            background-color: #4575a0;
         }
 
         /* Active effect for the custom button */
@@ -124,24 +126,25 @@
         }
     </style>
 </head>
+
 <body>
     <!-- <h1>{{ filename }}</h1> -->
     <h1>Event Log Entries : <u>{{ filename }}</u></h1>
     <div class="text-center">
-        <button class="custom-button" onclick="toggleAllPreVisibility()">Toggle All</button>
+        <button class="custom-button" onclick="toggleAllPreVisibility()">Expand All</button>
     </div>
     <div class="draggable-container" id="sortable-container">
         {% for event in events %}
-            <div class="draggable {% if event['event_id'] == '4624' %}highlighted-4624{% endif %}
+        <div class="draggable {% if event['event_id'] == '4624' %}highlighted-4624{% endif %}
             {% if event['event_id'] == '4648' %}highlighted-4648{% endif %}" draggable="true">
-                <button class= "button-singleToggle" onclick="togglePreVisibility(this)">Toggle</button>
-                <div class="event-content">
-                    <h2>Event ID: {{ event['event_id'] }}<br>Machine: {{ event['machineName'] }}</h2>
-                    <p>Timestamp: {{ event['timestamp'] }}</p>
-                    <pre>{{ event['data'] }}</pre> 
-                </div>
-                <hr>
+            <button class="button-singleToggle" onclick="togglePreVisibility(this)">Expand</button>
+            <div class="event-content">
+                <h2>Event ID: {{ event['event_id'] }}<br>Machine: {{ event['machineName'] }}</h2>
+                <p>Timestamp: {{ event['timestamp'] }}</p>
+                <pre>{{ event['data'] }}</pre>
             </div>
+            <hr>
+        </div>
         {% endfor %}
     </div>
     <script>
@@ -179,17 +182,40 @@
         function togglePreVisibility(button) {
             const eventContent = button.parentElement.querySelector('.event-content');
             const preElement = eventContent.querySelector('pre');
-            preElement.style.display = preElement.style.display === 'none' ? 'block' : 'none';
+            const expanded = button.getAttribute('data-expanded');
+
+            if (expanded === 'true') {
+                button.textContent = "Expand";
+                preElement.style.display = 'none';
+                button.setAttribute('data-expanded', 'false');
+            } else {
+                button.textContent = "Collapse";
+                preElement.style.display = 'block';
+                button.setAttribute('data-expanded', 'true');
+            }
         }
 
         function toggleAllPreVisibility() {
-            const preElements = document.getElementsByTagName('pre');
-            for (let i = 0; i < preElements.length; i++) {
-                const preElement = preElements[i];
-                preElement.style.display = preElement.style.display === 'none' ? 'block' : 'none';
-            }
+            const buttons = document.querySelectorAll('.button-singleToggle');
+
+            buttons.forEach(button => {
+                const eventContent = button.parentElement.querySelector('.event-content');
+                const preElement = eventContent.querySelector('pre');
+                const expanded = button.getAttribute('data-expanded');
+
+                if (expanded === 'true') {
+                    button.textContent = "Expand";
+                    preElement.style.display = 'none';
+                    button.setAttribute('data-expanded', 'false');
+                } else {
+                    button.textContent = "Collapse";
+                    preElement.style.display = 'block';
+                    button.setAttribute('data-expanded', 'true');
+                }
+            });
         }
     </script>
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/vkbeautify/0.99.3/vkbeautify.min.js"></script> -->
 </body>
+
 </html>
