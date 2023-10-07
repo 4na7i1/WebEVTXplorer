@@ -6,72 +6,22 @@
     <!-- Include Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f5f5f5;
-            background-image: linear-gradient(to right, rgba(0, 0, 0, 0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-
-        .header {
-            background-color: #007bff;
-            color: #fff;
-            padding: 20px;
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
-        }
-
-        h1 {
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .file-upload-btn {
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .file-upload-btn:hover {
-            background-color: #0056b3;
-        }
-
-        .file-actions button {
-            margin-left: 8px;
-        }
-
-        .list-group {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
-        }
-
-        .list-group a {
-            display: block;
-            text-decoration: none;
-        }
-    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/upload.css">
 </head>
 
 <body>
     <div class="header">
         <h1>WebEVTXplorer</h1>
+        <button id="darkModeToggle" class="custom-button toggle-button" onclick="toggleDarkMode()">
+            <i id="modeIcon" class="fas fa-moon"></i>
+        </button>
     </div>
 
     <div class="container mt-5">
         <div class="row">
             <div class="col-md-6 offset-md-3">
-                <div class="card">
+                <div class="card" id="upload-card">
                     <div class="card-header bg-primary text-white">
                         <h2 class="text-center">Upload your EVTX file</h2>
                     </div>
@@ -89,7 +39,7 @@
 
                 <div class="mt-4">
                     <h2>Uploaded Files</h2>
-                    <table class="table table-striped table-hover table-sm">
+                    <table id="files-table" class="table table-striped table-hover table-sm">
                         <thead>
                             <tr>
                                 <th>File Name</th>
@@ -123,6 +73,16 @@
         crossorigin="anonymous"></script>
 
     <script>
+        //Dark or Light Mode
+        document.addEventListener("DOMContentLoaded", function () {
+            const mode = getCookie("mode");
+            if (mode === "dark") {
+                enableDarkMode();
+            } else {
+                enableLightMode();
+            }
+        });
+
         function handleFileClick(filename) {
             // Submit the hidden form to send the filename to Flask Server
             const form = document.getElementById(`hiddenForm_${filename}`);
@@ -152,6 +112,54 @@
                     .catch(error => console.error('Error deleting file:', error));
             }
         };
+
+        function toggleDarkMode() {
+            const mode = getCookie("mode");
+            if (mode === "dark") {
+                enableLightMode();
+                fetch("/toggle_mode/light");
+            } else {
+                enableDarkMode();
+                fetch("/toggle_mode/dark");
+            }
+        }
+
+        function getCookie(name) {
+            const cookies = document.cookie.split("; ");
+            for (const cookie of cookies) {
+                const [cookieName, cookieValue] = cookie.split("=");
+                if (cookieName === name) {
+                    return cookieValue;
+                }
+            }
+            return "";
+        }
+
+        function enableDarkMode() {
+            const body = document.body;
+            const modeIcon = document.getElementById('modeIcon');
+            const filesTable = document.getElementById('files-table');
+            const uploadCard = document.getElementById('upload-card');
+
+            body.classList.add('dark-mode');
+            filesTable.classList.add('table-dark');
+            uploadCard.classList.add('bg-dark');
+            modeIcon.classList.toggle('fa-sun', false);
+            modeIcon.classList.toggle('fa-moon', true);
+        }
+
+        function enableLightMode() {
+            const body = document.body;
+            const modeIcon = document.getElementById('modeIcon');
+            const filesTable = document.getElementById('files-table');
+            const uploadCard = document.getElementById('upload-card');
+
+            body.classList.remove('dark-mode');
+            filesTable.classList.remove('table-dark');
+            uploadCard.classList.remove('bg-dark');
+            modeIcon.classList.toggle('fa-moon', false);
+            modeIcon.classList.toggle('fa-sun', true);
+        }
     </script>
 </body>
 

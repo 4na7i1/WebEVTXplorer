@@ -3,147 +3,18 @@
 
 <head>
     <title>EVTX Parser Results</title>
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f5f5f5;
-            margin: 0;
-            padding: 20px;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-            text-align: center;
-            color: #333;
-        }
-
-        .draggable-container {
-            display: flex;
-            flex-wrap: wrap;
-        }
-
-        .draggable.highlighted-4624 {
-            background-color: #ffc2c2;
-        }
-
-        .draggable.highlighted-4648 {
-            background-color: #c2eaff;
-        }
-
-        .draggable {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin: 10px;
-            cursor: grab;
-            min-width: 300px;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            font-family: 'Roboto', sans-serif;
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .dragover {
-            border: 2px dashed #ccc;
-        }
-
-        .draggable.dragging {
-            transform: scale(1.05);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-            opacity: 0.8;
-            cursor: grabbing;
-        }
-
-        /* Adjust the style for the <pre> element inside .draggable */
-        .draggable pre {
-            overflow: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            display: none;
-            /* Initially hide the pre element */
-        }
-
-        /* Card hover effect */
-        .draggable:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Custom button styles */
-        .custom-button {
-            background-color: #4CAF50;
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 10px;
-            cursor: pointer;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s ease;
-        }
-
-        /* Hover effect for the custom button */
-        .custom-button:hover {
-            background-color: #45a049;
-        }
-
-        /* Active effect for the custom button */
-        .custom-button:active {
-            background-color: #367e38;
-        }
-
-        .button-singleToggle {
-            background-color: #4ca0af;
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 10px;
-            cursor: pointer;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s ease;
-        }
-
-        /* Hover effect for the custom button */
-        .button-singleToggle:hover {
-            background-color: #4575a0;
-        }
-
-        /* Active effect for the custom button */
-        .button-singleToggle:active {
-            background-color: #187185;
-        }
-
-        .memo-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .memo-text {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/result.css">
 </head>
 
 <body>
     <!-- <h1>{{ filename }}</h1> -->
-    <h1>Event Log Entries : <span class="file-name">{{filename}}</span></h1>
+    <div class="header">
+        <h1>Event Log Entries : <span class="file-name">{{filename}}</span></h1>
+        <button id="darkModeToggle" class="custom-button toggle-button" onclick="toggleDarkMode()">
+            <i id="modeIcon" class="fas fa-moon"></i>
+        </button>
+    </div>
     <div class="memo-content">
         <textarea class="memo-text" rows="4" placeholder="Add a memo"></textarea>
         <div>
@@ -152,17 +23,20 @@
         </div>
     </div>
     <div class="text-center">
-        <button class="custom-button" onclick="toggleAllPreVisibility()">Expand All</button>
+        <button class="custom-button" onclick="toggleAllPreVisibility()">Toggle All</button>
+        <input type="text" class="search-input" id="filter-input" placeholder="Search by Event ID">
     </div>
     <div class="draggable-container" id="sortable-container">
         {% for event in events %}
         <div class="draggable {% if event['event_id'] == '4624' %}highlighted-4624{% endif %}
             {% if event['event_id'] == '4648' %}highlighted-4648{% endif %}" draggable="true">
             <button class="button-singleToggle" onclick="togglePreVisibility(this)">Expand</button>
-            <div class="event-content">
-                <h2>Event ID: {{ event['event_id'] }}<br>Machine: {{ event['machineName'] }}</h2>
-                <p>Timestamp: {{ event['timestamp'] }}</p>
-                <pre>{{ event['data'] }}</pre>
+            <div class="event-content" id="event-content">
+                <h2 id="event-id">Event ID: {{ event['event_id'] }}</h2>
+                <h2 id="machine-name">Machine: {{ event['machineName'] }}</h2>
+                <p id="timestamp">Timestamp: {{ event['timestamp'] }}</p>
+                <hr>
+                <pre id="event-data">{{ event['data'] }}</pre>
             </div>
             <hr>
         </div>
@@ -197,6 +71,19 @@
                 } else {
                     sortableContainer.insertBefore(draggingElement, targetElement);
                 }
+            }
+        });
+
+        //Filtering Feature
+        document.getElementById('filter-input').addEventListener('input', filterCards);
+
+        //Dark or Light Mode
+        document.addEventListener("DOMContentLoaded", function () {
+            const mode = getCookie("mode");
+            if (mode === "dark") {
+                enableDarkMode();
+            } else {
+                enableLightMode();
             }
         });
 
@@ -285,6 +172,62 @@
                 .catch(error => {
                     console.error('Error saving memo:', error);
                 });
+        }
+
+        function filterCards() {
+            const filterText = document.getElementById('filter-input').value.toLowerCase();
+            const cards = document.querySelectorAll('.draggable');
+
+            cards.forEach(card => {
+                var event_id_element = card.querySelector("#event-id"); // Use querySelector instead of getElementById
+                var event_id_text = event_id_element.textContent || event_id_element.innerText;
+                const eventID = event_id_text.replace("Event ID: ", "").trim().toLowerCase(); // Call toLowerCase()
+                if (eventID.includes(filterText)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleDarkMode() {
+            const mode = getCookie("mode");
+            if (mode === "dark") {
+                enableLightMode();
+                fetch("/toggle_mode/light");
+            } else {
+                enableDarkMode();
+                fetch("/toggle_mode/dark");
+            }
+        }
+
+        function getCookie(name) {
+            const cookies = document.cookie.split("; ");
+            for (const cookie of cookies) {
+                const [cookieName, cookieValue] = cookie.split("=");
+                if (cookieName === name) {
+                    return cookieValue;
+                }
+            }
+            return "";
+        }
+
+        function enableDarkMode() {
+            const body = document.body;
+            const modeIcon = document.getElementById('modeIcon');
+
+            body.classList.add('dark-mode');
+            modeIcon.classList.toggle('fa-sun', false);
+            modeIcon.classList.toggle('fa-moon', true);
+        }
+
+        function enableLightMode() {
+            const body = document.body;
+            const modeIcon = document.getElementById('modeIcon');
+
+            body.classList.remove('dark-mode');
+            modeIcon.classList.toggle('fa-moon', false);
+            modeIcon.classList.toggle('fa-sun', true);
         }
     </script>
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/vkbeautify/0.99.3/vkbeautify.min.js"></script> -->

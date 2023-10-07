@@ -1,5 +1,5 @@
 .venv
-static
+static/img/
 *.evtx
 *.cmd
 *.db
