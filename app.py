@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, redirect, render_template, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 import os
 from evtx import PyEvtxParser
@@ -6,6 +6,7 @@ import re
 
 event_id_pattern = re.compile(r'<EventID(?:\s+Qualifiers="\d+")?>(\d+)</EventID>')
 machine_name_pattern = re.compile(r"<Computer>(.*?)</Computer>")
+isDarkMode = False
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///memos.db"
@@ -22,7 +23,7 @@ class Memo(db.Model):
 if not os.path.exists("uploads"):
     os.makedirs("uploads")
 
-# Flaskアプリケーションコンテキストを設定
+# Setup Flask Application Context 
 with app.app_context():
     db.create_all()
 
@@ -108,6 +109,11 @@ def save_memo():
     db.session.commit()
     return jsonify({"success": True})
 
+@app.route("/toggle_mode/<mode>")
+def toggle_mode(mode):
+    response = make_response(redirect(request.referrer))
+    response.set_cookie('mode', mode)
+    return response
 
 def stream_template(template_name, **context):
     app.update_template_context(context)
