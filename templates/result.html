@@ -124,12 +124,33 @@
         .button-singleToggle:active {
             background-color: #187185;
         }
+
+        .memo-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .memo-text {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
     </style>
 </head>
 
 <body>
     <!-- <h1>{{ filename }}</h1> -->
-    <h1>Event Log Entries : <u>{{ filename }}</u></h1>
+    <h1>Event Log Entries : <span class="file-name">{{filename}}</span></h1>
+    <div class="memo-content">
+        <textarea class="memo-text" rows="4" placeholder="Add a memo"></textarea>
+        <div>
+            <button class="custom-button" onclick="saveMemo(this)">Save Memo</button>
+            <button class="custom-button" onclick="getMemo(this)">Get Memo</button>
+        </div>
+    </div>
     <div class="text-center">
         <button class="custom-button" onclick="toggleAllPreVisibility()">Expand All</button>
     </div>
@@ -213,6 +234,57 @@
                     button.setAttribute('data-expanded', 'true');
                 }
             });
+        }
+
+        function getMemo(button) {
+            var fileNameSpan = document.querySelector('.file-name');
+            var memoTextarea = document.querySelector('.memo-text');
+            const fileName = fileNameSpan.textContent;
+            const memoText = memoTextarea.value;
+            fetch(`/get_memo?filename=${fileName}`, {
+                method: 'GET'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.memo !== null) {
+                        memoTextarea.value = data.memo;
+                    } else {
+                        memoTextarea.value = '';
+                        alert('No memo found for this event.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error getting memo:', error);
+                });
+        }
+
+        function saveMemo(button) {
+            var fileNameSpan = document.querySelector('.file-name');
+            var memoTextarea = document.querySelector('.memo-text');
+            const fileName = fileNameSpan.textContent;
+            const memoText = memoTextarea.value;
+
+            console.log(fileName, memoText)
+
+            // Send a request to the server to save the memo
+            fetch('/save_memo', {
+                method: 'POST',
+                body: JSON.stringify({ filename: fileName, memo: memoText }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Memo saved successfully.');
+                    } else {
+                        alert('Memo could not be saved.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving memo:', error);
+                });
         }
     </script>
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/vkbeautify/0.99.3/vkbeautify.min.js"></script> -->

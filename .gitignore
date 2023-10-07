@@ -1,4 +1,7 @@
 .venv
 static
 *.evtx
+*.cmd
+*.db
 test*
+.vscode/
