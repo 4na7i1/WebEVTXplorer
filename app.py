@@ -126,7 +126,7 @@ def save_memo():
 @app.route("/toggle_mode/<mode>")
 def toggle_mode(mode):
     response = make_response(redirect(request.referrer))
-    response.set_cookie("mode", mode, httponly=True, secure=True)
+    response.set_cookie("mode", mode, secure=True)
     return response
 
 
