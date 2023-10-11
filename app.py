@@ -23,7 +23,7 @@ class Memo(db.Model):
 if not os.path.exists("uploads"):
     os.makedirs("uploads")
 
-# Setup Flask Application Context 
+# Setup Flask Application Context
 with app.app_context():
     db.create_all()
 
@@ -37,17 +37,25 @@ def index():
 @app.route("/parse", methods=["POST"])
 def parse_evtx():
     evtx_file = request.files["evtx_file"]
-    if evtx_file:
+    if evtx_file.filename.endswith(".evtx"):
         file_path = os.path.join("uploads", evtx_file.filename)
 
         if not os.path.isfile(file_path):
             evtx_file.save(file_path)
 
-        events_generator = parse_evtx_file(file_path)
-        return stream_template(
-            "result.html", events=events_generator, filename=evtx_file.filename
-        )
-
+            if is_evtx_file(file_path):
+                events_generator = parse_evtx_file(file_path)
+                return stream_template(
+                    "result.html", events=events_generator, filename=evtx_file.filename
+                )
+            else:
+                os.remove(file_path)
+                return "Invalid file format."
+        else:
+            events_generator = parse_evtx_file(file_path)
+            return stream_template(
+                "result.html", events=events_generator, filename=evtx_file.filename
+            )
     return "No file uploaded."
 
 
@@ -109,11 +117,13 @@ def save_memo():
     db.session.commit()
     return jsonify({"success": True})
 
+
 @app.route("/toggle_mode/<mode>")
 def toggle_mode(mode):
     response = make_response(redirect(request.referrer))
-    response.set_cookie('mode', mode)
+    response.set_cookie("mode", mode)
     return response
+
 
 def stream_template(template_name, **context):
     app.update_template_context(context)
@@ -160,6 +170,14 @@ def remove_rendering_INFOo(event_data):
     return re.sub(
         r"<RenderingINFOo[^>]*>.*?</RenderingINFOo>\n", "", event_data, flags=re.DOTALL
     )
+
+
+def is_evtx_file(file_path):
+    #FIXME: header disguise (filesize)
+    # Check if the file starts with the EVTX file signature
+    with open(file_path, "rb") as f:
+        signature = f.read(8)
+        return signature == b"ElfFile\x00"
 
 
 if __name__ == "__main__":
