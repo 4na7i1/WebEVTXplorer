@@ -3,7 +3,7 @@
 
 <head>
     <title>EVTX Parser Results</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="static/css/result.css">
 </head>
 
@@ -11,15 +11,18 @@
     <!-- <h1>{{ filename }}</h1> -->
     <div class="header">
         <h1>Event Log Entries : <span class="file-name">{{filename}}</span></h1>
-        <button id="darkModeToggle" class="custom-button toggle-button" onclick="toggleDarkMode()">
-            <i id="modeIcon" class="fas fa-moon"></i>
+        <a id="homeButton" class="header-button" href="/">
+            <i class="fa-solid fa-house"></i> HOME
+        </a>
+        <button id="darkModeToggle" class="header-button" onclick="toggleDarkMode()">
+            <i id="modeIcon" class="fa-solid fa-moon"></i>
         </button>
     </div>
     <div class="memo-content">
         <textarea class="memo-text" rows="4" placeholder="Add a memo"></textarea>
         <div>
-            <button class="custom-button" onclick="saveMemo(this)">Save Memo</button>
-            <button class="custom-button" onclick="getMemo(this)">Get Memo</button>
+            <button class="custom-button" onclick="saveMemo()">Save Memo</button>
+            <button class="custom-button" onclick="getMemo()">Get Memo</button>
         </div>
     </div>
     <div class="text-center">
@@ -77,8 +80,11 @@
         //Filtering Feature
         document.getElementById('filter-input').addEventListener('input', filterCards);
 
-        //Dark or Light Mode
+        
         document.addEventListener("DOMContentLoaded", function () {
+            //Get MEMO
+            getMemo();
+            //Dark or Light Mode
             const mode = getCookie("mode");
             if (mode === "dark") {
                 enableDarkMode();
@@ -123,7 +129,7 @@
             });
         }
 
-        function getMemo(button) {
+        function getMemo() {
             var fileNameSpan = document.querySelector('.file-name');
             var memoTextarea = document.querySelector('.memo-text');
             const fileName = fileNameSpan.textContent;
@@ -137,7 +143,7 @@
                         memoTextarea.value = data.memo;
                     } else {
                         memoTextarea.value = '';
-                        alert('No memo found for this event.');
+                        // alert('No memo found for this event.');
                     }
                 })
                 .catch(error => {
@@ -145,7 +151,7 @@
                 });
         }
 
-        function saveMemo(button) {
+        function saveMemo() {
             var fileNameSpan = document.querySelector('.file-name');
             var memoTextarea = document.querySelector('.memo-text');
             const fileName = fileNameSpan.textContent;
