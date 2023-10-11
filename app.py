@@ -181,4 +181,4 @@ def is_evtx_file(file_path):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+    app.run()
